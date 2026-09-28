@@ -728,11 +728,14 @@ const applyEasyContextInfo = (m, flags, { jid, mentions }) => {
 			mediaUrl: c.url,
 			renderLargerThumbnail: c.largeThumbnail,
 			sourceUrl: c.url,
-			thumbnailUrl: c.url ? c.url + '?update=' + Date.now() : undefined,
 			title: c.title || 'baileys-easy'
 		}
 		delete externalAdReply.largeThumbnail
 		delete externalAdReply.url
+		// no auto-generated thumbnailUrl: deriving it from the article URL points
+		// the client at an HTML page instead of an image; pass thumbnailUrl
+		// explicitly if you have a real thumbnail image URL
+		if (externalAdReply.thumbnailUrl === undefined) delete externalAdReply.thumbnailUrl
 		target.contextInfo.externalAdReply = { ...target.contextInfo.externalAdReply, ...externalAdReply }
 	}
 
