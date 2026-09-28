@@ -54,25 +54,6 @@ console.log('— CJS require')
 const cjs = require('./baileys-easy.cjs')
 ok('cjs loads + same fn', typeof cjs.sendEasyMessage === 'function')
 
-console.log('— text + externalAdReply')
-reset()
-await easy.sendEasyMessage(mockSock, '1234567890@s.whatsapp.net', {
-	text: 'hello',
-	externalAdReply: { title: 'T', body: 'B', url: 'https://example.com', thumbnail: PNG }
-})
-{
-	const m = last().message
-	const ear = m.extendedTextMessage.contextInfo.externalAdReply
-	ok('title kept', ear.title === 'T')
-	ok('mediaType default 1', ear.mediaType === 1)
-	ok('sourceUrl set', ear.sourceUrl === 'https://example.com')
-	ok('thumbnail buffer kept', Buffer.isBuffer(ear.thumbnail))
-	// proto round-trip: nothing dropped
-	const enc = proto.Message.encode(m).finish()
-	const dec = proto.Message.decode(enc)
-	ok('proto round-trip keeps adReply', dec.extendedTextMessage.contextInfo.externalAdReply.title === 'T')
-}
-
 console.log('— mentionAll')
 reset()
 await easy.sendEasyMessage(mockSock, '120363000000@g.us', { text: 'hi all', mentionAll: true })
@@ -81,19 +62,10 @@ await easy.sendEasyMessage(mockSock, '120363000000@g.us', { text: 'hi all', ment
 	ok('nonJidMentions=1', normalizeMessageContent(m).extendedTextMessage.contextInfo.nonJidMentions === 1)
 }
 
-console.log('— viewOnce / ephemeral / isLottie wrappers')
-reset()
-await easy.sendEasyMessage(mockSock, '1234567890@s.whatsapp.net', { text: 'secret', viewOnce: true })
-ok('viewOnceMessage wrapper', !!last().message.viewOnceMessage)
+console.log('— ephemeral / isLottie wrappers')
 reset()
 await easy.sendEasyMessage(mockSock, '1234567890@s.whatsapp.net', { text: 'x', ephemeral: true })
 ok('ephemeralMessage wrapper', !!last().message.ephemeralMessage)
-reset()
-await easy.sendEasyMessage(mockSock, '1234567890@s.whatsapp.net', { text: 'x', viewOnceV2: true })
-ok('viewOnceMessageV2 wrapper', !!last().message.viewOnceMessageV2)
-reset()
-await easy.sendEasyMessage(mockSock, '1234567890@s.whatsapp.net', { text: 'x', viewOnceV2Extension: true })
-ok('viewOnceMessageV2Extension wrapper', !!last().message.viewOnceMessageV2Extension)
 
 console.log('— ai flag')
 reset()

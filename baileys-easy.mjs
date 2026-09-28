@@ -7,11 +7,10 @@
  * prepareWAMessageMedia / proto / sock.relayMessage.
  *
  * What's inside (all rated "easy" to port):
- *   - simplified `externalAdReply` (pass title/body/url/thumbnail directly)
  *   - `mentionAll` (+ `mentions` passthrough)
  *   - `groupStatus` (contextInfo.isGroupStatus + groupStatusMessageV2 wrapper)
  *   - `interactiveAsTemplate` (wrap interactiveMessage in templateMessage)
- *   - `ephemeral`, `isLottie`, `viewOnce`, `viewOnceV2`, `viewOnceV2Extension`
+ *   - `ephemeral`, `isLottie`
  *   - `ai` (Meta AI badge: supportPayload + bot node, 1:1 chats only)
  *   - `raw` (pass a pre-built proto message object straight through)
  *   - payments: `paymentInviteServiceType`, `orderText`, `requestPaymentFrom`, `invoiceNote`
@@ -61,8 +60,8 @@ const BIZ_BOT_SUPPORT_PAYLOAD = '{"version":1,"is_ai_message":true,"should_uploa
 
 /** Content keys consumed by this helper (never passed to official generateWAMessageContent). */
 const EASY_FLAGS = [
-	'raw', 'externalAdReply', 'mentionAll', 'groupStatus', 'interactiveAsTemplate',
-	'ephemeral', 'isLottie', 'viewOnce', 'viewOnceV2', 'viewOnceV2Extension',
+	'raw', 'mentionAll', 'groupStatus', 'interactiveAsTemplate',
+	'ephemeral', 'isLottie',
 	'ai', 'paymentInviteServiceType', 'orderText', 'requestPaymentFrom', 'invoiceNote',
 	'keep', 'pin', 'requestPhoneNumber', 'sharePhoneNumber', 'limitSharing',
 	'buttonReply', 'listReply', 'flowReply', 'product', 'album',
@@ -669,11 +668,10 @@ const buildProtoMessage = async (content, mediaCtx) => {
 	return { m, flags }
 }
 
-/** Structural wrappers (viewOnce / ephemeral / lottie / template / groupStatus). */
+/** Structural wrappers (ephemeral / lottie / template / groupStatus). */
 const applyWrappers = (m, flags) => {
 	// wrap but keep messageContextInfo outside the wrapper (official parity:
-	// generateWAMessageContent adds it AFTER wrapping, so it stays top-level;
-	// trapping it inside breaks client rendering, e.g. view-once media)
+	// generateWAMessageContent adds it AFTER wrapping, so it stays top-level)
 	const wrapHoisted = (msg, wrapper) => {
 		const { messageContextInfo, ...rest } = msg
 		const wrapped = { [wrapper]: { message: rest } }
@@ -696,15 +694,6 @@ const applyWrappers = (m, flags) => {
 	if (flags.isLottie) {
 		m = { lottieStickerMessage: { message: m } }
 	}
-	else if (flags.viewOnce) {
-		m = wrapHoisted(m, 'viewOnceMessage')
-	}
-	else if (flags.viewOnceV2) {
-		m = wrapHoisted(m, 'viewOnceMessageV2')
-	}
-	else if (flags.viewOnceV2Extension) {
-		m = wrapHoisted(m, 'viewOnceMessageV2Extension')
-	}
 	if (flags.groupStatus) {
 		const messageType = Object.keys(m)[0]
 		const key = m[messageType]
@@ -725,28 +714,6 @@ const applyEasyContextInfo = (m, flags, { jid, mentions }) => {
 	if (!target || typeof target !== 'object') return
 
 	target.contextInfo = target.contextInfo || {}
-
-	if (flags.externalAdReply) {
-		const c = { ...flags.externalAdReply }
-		if (c.thumbnail && !Buffer.isBuffer(c.thumbnail)) {
-			throw new Error('externalAdReply.thumbnail must be a Buffer')
-		}
-		const externalAdReply = {
-			...c,
-			mediaType: c.mediaType || 1,
-			mediaUrl: c.url,
-			renderLargerThumbnail: c.largeThumbnail,
-			sourceUrl: c.url,
-			title: c.title || 'baileys-easy'
-		}
-		delete externalAdReply.largeThumbnail
-		delete externalAdReply.url
-		// no auto-generated thumbnailUrl: deriving it from the article URL points
-		// the client at an HTML page instead of an image; pass thumbnailUrl
-		// explicitly if you have a real thumbnail image URL
-		if (externalAdReply.thumbnailUrl === undefined) delete externalAdReply.thumbnailUrl
-		target.contextInfo.externalAdReply = { ...target.contextInfo.externalAdReply, ...externalAdReply }
-	}
 
 	if ((mentions && mentions.length) || flags.mentionAll) {
 		if (mentions && mentions.length) target.contextInfo.mentionedJid = mentions

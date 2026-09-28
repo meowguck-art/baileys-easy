@@ -24,25 +24,13 @@ Everything goes through official exports (`generateWAMessageContent`,
 ```js
 import { sendEasyMessage } from 'baileys-easy'
 
-// simplified externalAdReply — no contextInfo boilerplate
-await sendEasyMessage(sock, jid, {
-  text: 'Check this out',
-  externalAdReply: {
-    title: 'My site',
-    body: 'click me',
-    url: 'https://example.com',
-    thumbnail: thumbnailBuffer // Buffer
-  }
-})
-
 // mention everyone
 await sendEasyMessage(sock, groupJid, { text: 'hello all', mentionAll: true })
 
 // Meta AI badge (1:1 chats only)
 await sendEasyMessage(sock, userJid, { text: 'I am AI ✨', ai: true })
 
-// view-once / ephemeral / lottie wrappers
-await sendEasyMessage(sock, jid, { image: { url: '...' }, viewOnce: true })
+// ephemeral / lottie wrappers
 await sendEasyMessage(sock, jid, { text: 'burn after reading', ephemeral: true })
 
 // photo album (min. 2 items)
@@ -64,13 +52,11 @@ All flags live **inside** the content object, next to the usual
 
 | Flag | What it does |
 |---|---|
-| `externalAdReply: {title, body, url, thumbnail, largeThumbnail, mediaType}` | link preview card, expanded with sane defaults |
 | `mentionAll: true` | `contextInfo.nonJidMentions = 1` (also accepts `mentions: [...]`) |
 | `groupStatus: true` | `isGroupStatus` + `groupStatusMessageV2` wrapper |
 | `interactiveAsTemplate: true` | wraps `interactiveMessage` in `templateMessage` |
 | `ephemeral: true` | `ephemeralMessage` wrapper |
 | `isLottie: true` | `lottieStickerMessage` wrapper |
-| `viewOnce` / `viewOnceV2` / `viewOnceV2Extension` | respective wrappers |
 | `ai: true` | AI badge (`supportPayload` + `bot` node). 1:1 chats only |
 | `raw: {...}` | pre-built proto message, sent as-is |
 | `paymentInviteServiceType` | `paymentInviteMessage` |
