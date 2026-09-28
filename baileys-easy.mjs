@@ -671,6 +671,15 @@ const buildProtoMessage = async (content, mediaCtx) => {
 
 /** Structural wrappers (viewOnce / ephemeral / lottie / template / groupStatus). */
 const applyWrappers = (m, flags) => {
+	// wrap but keep messageContextInfo outside the wrapper (official parity:
+	// generateWAMessageContent adds it AFTER wrapping, so it stays top-level;
+	// trapping it inside breaks client rendering, e.g. view-once media)
+	const wrapHoisted = (msg, wrapper) => {
+		const { messageContextInfo, ...rest } = msg
+		const wrapped = { [wrapper]: { message: rest } }
+		if (messageContextInfo !== undefined) wrapped.messageContextInfo = messageContextInfo
+		return wrapped
+	}
 	if (flags.interactiveAsTemplate) {
 		const normalized = normalizeMessageContent(m)
 		if (!normalized?.interactiveMessage) throw new Error('interactiveAsTemplate needs an interactiveMessage')
@@ -682,19 +691,19 @@ const applyWrappers = (m, flags) => {
 		}
 	}
 	if (flags.ephemeral) {
-		m = { ephemeralMessage: { message: m } }
+		m = wrapHoisted(m, 'ephemeralMessage')
 	}
 	if (flags.isLottie) {
 		m = { lottieStickerMessage: { message: m } }
 	}
 	else if (flags.viewOnce) {
-		m = { viewOnceMessage: { message: m } }
+		m = wrapHoisted(m, 'viewOnceMessage')
 	}
 	else if (flags.viewOnceV2) {
-		m = { viewOnceMessageV2: { message: m } }
+		m = wrapHoisted(m, 'viewOnceMessageV2')
 	}
 	else if (flags.viewOnceV2Extension) {
-		m = { viewOnceMessageV2Extension: { message: m } }
+		m = wrapHoisted(m, 'viewOnceMessageV2Extension')
 	}
 	if (flags.groupStatus) {
 		const messageType = Object.keys(m)[0]
