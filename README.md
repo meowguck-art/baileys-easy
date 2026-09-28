@@ -59,18 +59,11 @@ All flags live **inside** the content object, next to the usual
 | `isLottie: true` | `lottieStickerMessage` wrapper |
 | `ai: true` | AI badge (`supportPayload` + `bot` node). 1:1 chats only |
 | `raw: {...}` | pre-built proto message, sent as-is |
-| `paymentInviteServiceType` | `paymentInviteMessage` |
-| `orderText` + `thumbnail` (Buffer) | `orderMessage` with defaults |
-| `requestPaymentFrom` | `requestPaymentMessage` wrapping a text/sticker note |
-| `invoiceNote` | `invoiceMessage` wrapping an image/document |
-| `product: {businessOwnerJid, image, product: {...}}` | `productMessage` with defaults |
-| `keep: key` / `pin: key` | `keepInChatMessage` / `pinInChatMessage` |
-| `requestPhoneNumber` / `sharePhoneNumber` / `limitSharing` | protocol messages |
 | `buttonReply: {id, displayText[, index]}` + `type: 'plain'/'template'` | buttons/template response |
 | `listReply: {id, title, description}` | list response |
 | `flowReply: {text, name, paramsJson, version, format}` | native-flow response |
 | `album: [...]` | album parent + media items linked via `messageAssociation` |
-| `buttons` / `sections` / `templateButtons` / `nativeFlow` / `cards` | interactive messages (quick_reply/cta buttons, lists, hydrated templates, native flows, carousels) — with biz node + bot node on send |
+| `buttons` / `sections` / `templateButtons` / `nativeFlow` | interactive messages (quick_reply/cta buttons, lists, hydrated templates, native flows) — with biz node + bot node on send |
 
 `sendEasyMessage(sock, jid, content, options)` — options: `quoted`, `userJid`,
 `messageId`, `timestamp`, `upload` (default: `sock.waUploadToServer`),

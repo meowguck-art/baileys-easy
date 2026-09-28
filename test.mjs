@@ -92,20 +92,7 @@ await easy.sendEasyMessage(mockSock, 'status@broadcast', { text: 'gs', groupStat
 	ok('isGroupStatus set', getContentType(inner) === 'extendedTextMessage' && inner.extendedTextMessage.contextInfo.isGroupStatus === true)
 }
 
-console.log('— payments / pin / keep / replies')
-reset()
-await easy.sendEasyMessage(mockSock, '1234567890@s.whatsapp.net', { paymentInviteServiceType: 1 })
-ok('paymentInviteMessage', !!last().message.paymentInviteMessage)
-reset()
-await easy.sendEasyMessage(mockSock, '1234567890@s.whatsapp.net', { keep: { remoteJid: 'x', id: 'y', fromMe: true }, type: 2 })
-ok('keepInChatMessage', !!last().message.keepInChatMessage)
-reset()
-await easy.sendEasyMessage(mockSock, '1234567890@s.whatsapp.net', { pin: { remoteJid: 'x', id: 'y' }, type: 1, time: 60 })
-{
-	const m = last().message
-	ok('pinInChatMessage', !!m.pinInChatMessage)
-	ok('addOn duration', m.messageContextInfo.messageAddOnDurationInSecs === 60)
-}
+console.log('— replies')
 reset()
 await easy.sendEasyMessage(mockSock, '1234567890@s.whatsapp.net', { listReply: { id: 'r1', title: 'Row', description: 'desc' } })
 ok('listResponseMessage', !!last().message.listResponseMessage)
@@ -118,18 +105,6 @@ ok('templateButtonReplyMessage', !!last().message.templateButtonReplyMessage)
 reset()
 await easy.sendEasyMessage(mockSock, '1234567890@s.whatsapp.net', { flowReply: { text: 'done', name: 'flow_x' } })
 ok('interactiveResponseMessage', !!last().message.interactiveResponseMessage)
-reset()
-await easy.sendEasyMessage(mockSock, '1234567890@s.whatsapp.net', { sharePhoneNumber: true })
-ok('sharePhoneNumber protocol', last().message.protocolMessage.type === proto.Message.ProtocolMessage.Type.SHARE_PHONE_NUMBER)
-reset()
-await easy.sendEasyMessage(mockSock, '1234567890@s.whatsapp.net', { requestPhoneNumber: true })
-ok('requestPhoneNumberMessage', !!last().message.requestPhoneNumberMessage)
-reset()
-await easy.sendEasyMessage(mockSock, '1234567890@s.whatsapp.net', { limitSharing: true })
-{
-	const pm = last().message.protocolMessage
-	ok('limitSharing protocol', pm.type === proto.Message.ProtocolMessage.Type.LIMIT_SHARING && pm.limitSharing.sharingLimited === true)
-}
 
 console.log('— raw passthrough')
 reset()
@@ -184,19 +159,6 @@ try {
 	ok('parent key linked', itemCtx.messageAssociation.parentMessageKey.id === sent[0].opts.messageId)
 } catch (e) {
 	ok('album happy path (media upload may need thumbnail libs)', false, e.message.split('\n')[0])
-}
-
-console.log('— product')
-reset()
-try {
-	await easy.sendEasyMessage(mockSock, '1234567890@s.whatsapp.net', {
-		product: { businessOwnerJid: '1234567890@s.whatsapp.net', image: PNG, product: { title: 'T', priceAmount1000: 5000, currencyCode: 'USD' } }
-	})
-	const pm = last().message.productMessage
-	ok('productMessage built', !!pm?.product?.productImage)
-	ok('defaults merged', pm.product.inStockQuantity === 0 && pm.product.title === 'T')
-} catch (e) {
-	ok('product happy path (media upload may need thumbnail libs)', false, e.message.split('\n')[0])
 }
 
 console.log('— findUserId')
@@ -352,7 +314,7 @@ await easy.sendEasyMessage(mockSock, '1234567890@s.whatsapp.net', {
 	ok('biz node', s.opts.additionalNodes.some(n => n.tag === 'biz'))
 }
 
-console.log('— interactive: media header + carousel')
+console.log('— interactive: media header')
 reset()
 await easy.sendEasyMessage(mockSock, '1234567890@s.whatsapp.net', {
 	caption: 'with image header',
@@ -363,21 +325,6 @@ await easy.sendEasyMessage(mockSock, '1234567890@s.whatsapp.net', {
 	const inner = normalizeMessageContent(last().message)
 	ok('media header attached', !!inner.interactiveMessage.header.imageMessage)
 	ok('hasMediaAttachment', inner.interactiveMessage.header.hasMediaAttachment === true)
-}
-reset()
-await easy.sendEasyMessage(mockSock, '1234567890@s.whatsapp.net', {
-	cards: [
-		{ image: PNG, text: 'card one', nativeFlow: [{ id: 'c1', text: 'Go' }] },
-		{ image: PNG, text: 'card two', nativeFlow: [{ url: 'https://example.com', text: 'Web' }] }
-	]
-})
-{
-	const s = last()
-	const cm = normalizeMessageContent(s.message).interactiveMessage.carouselMessage
-	ok('carousel 2 cards', cm.cards.length === 2)
-	ok('card buttons', cm.cards[0].nativeFlowMessage.buttons[0].name === 'quick_reply')
-	ok('no biz node for carousel (fork parity)', !s.opts.additionalNodes.some(n => n.tag === 'biz'))
-	ok('viewOnce wrapper', !!s.message.viewOnceMessage)
 }
 
 console.log('— interactive: caption without media throws')

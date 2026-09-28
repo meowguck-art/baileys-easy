@@ -13,13 +13,10 @@
  *   - `ephemeral`, `isLottie`
  *   - `ai` (Meta AI badge: supportPayload + bot node, 1:1 chats only)
  *   - `raw` (pass a pre-built proto message object straight through)
- *   - payments: `paymentInviteServiceType`, `orderText`, `requestPaymentFrom`, `invoiceNote`
- *   - `product` (with sane defaults)
- *   - `keep`, `pin`, `requestPhoneNumber`, `sharePhoneNumber`, `limitSharing`
  *   - reply builders: `buttonReply`, `listReply`, `flowReply`
  *   - `album` (parent albumMessage + media items linked via messageAssociation)
  *   - interactive: `buttons` (quick_reply/cta/single_select), `sections` (lists),
- *     `templateButtons`, `nativeFlow`, `cards` (carousel) — with the fork's biz
+ *     `templateButtons`, `nativeFlow` — with the fork's biz
  *     binary node + bot node on send, and the viewOnce wrapper interactive
  *     messages need to render tappable
  *   - `deviceListMetadata` injection for 1:1 chats (automatic, like the fork)
@@ -62,10 +59,9 @@ const BIZ_BOT_SUPPORT_PAYLOAD = '{"version":1,"is_ai_message":true,"should_uploa
 const EASY_FLAGS = [
 	'raw', 'mentionAll', 'groupStatus', 'interactiveAsTemplate',
 	'ephemeral', 'isLottie',
-	'ai', 'paymentInviteServiceType', 'orderText', 'requestPaymentFrom', 'invoiceNote',
-	'keep', 'pin', 'requestPhoneNumber', 'sharePhoneNumber', 'limitSharing',
-	'buttonReply', 'listReply', 'flowReply', 'product', 'album',
-	'buttons', 'sections', 'templateButtons', 'nativeFlow', 'cards'
+	'ai',
+	'buttonReply', 'listReply', 'flowReply', 'album',
+	'buttons', 'sections', 'templateButtons', 'nativeFlow'
 ]
 
 const splitEasyFlags = (content = {}) => {
@@ -484,115 +480,6 @@ const buildProtoMessage = async (content, mediaCtx) => {
 		// pre-built proto message object, sent as-is
 		m = { ...flags.raw }
 	}
-	else if (flags.paymentInviteServiceType !== undefined) {
-		m = {
-			paymentInviteMessage: {
-				expiryTimestamp: Date.now(),
-				serviceType: flags.paymentInviteServiceType
-			}
-		}
-	}
-	else if (flags.orderText !== undefined) {
-		if (!Buffer.isBuffer(rest.thumbnail)) {
-			throw new Error('orderText requires a thumbnail Buffer')
-		}
-		m = {
-			orderMessage: {
-				itemCount: 1,
-				messageVersion: 1,
-				orderTitle: 'baileys-easy',
-				status: proto.Message.OrderMessage.OrderStatus.INQUIRY,
-				surface: proto.Message.OrderMessage.OrderSurface.CATALOG,
-				token: generateMessageIDV2(),
-				totalAmount1000: 1000,
-				totalCurrencyCode: 'IDR',
-				...rest,
-				message: flags.orderText
-			}
-		}
-		delete m.orderMessage.orderText
-	}
-	else if (flags.requestPaymentFrom !== undefined) {
-		const note = await generateWAMessageContent(rest, mediaCtx)
-		if (!note.extendedTextMessage && !note.stickerMessage) {
-			throw new Error('requestPaymentFrom needs a text or sticker note message')
-		}
-		m = {
-			requestPaymentMessage: {
-				amount: { currencyCode: 'IDR', offset: 1000, value: 1000 },
-				amount1000: 1000,
-				currencyCodeIso4217: 'IDR',
-				expiryTimestamp: Date.now(),
-				noteMessage: note,
-				requestFrom: flags.requestPaymentFrom,
-				...rest
-			}
-		}
-		delete m.requestPaymentMessage.requestPaymentFrom
-	}
-	else if (flags.invoiceNote !== undefined) {
-		const inner = await generateWAMessageContent(rest, mediaCtx)
-		const attachment = inner.imageMessage || inner.documentMessage
-		if (!attachment) {
-			throw new Error('invoiceNote needs an image or document')
-		}
-		const type = Object.keys(inner)[0].replace('Message', '').toUpperCase()
-		const { directPath, fileEncSha256, fileSha256, jpegThumbnail, mediaKey, mediaKeyTimestamp, mimetype } = attachment
-		m = {
-			invoiceMessage: {
-				attachmentType: proto.Message.InvoiceMessage.AttachmentType[type === 'DOCUMENT' ? 'PDF' : 'IMAGE'],
-				note: flags.invoiceNote,
-				attachmentDirectPath: directPath,
-				attachmentFileEncSha256: fileEncSha256,
-				attachmentFileSha256: fileSha256,
-				attachmentJpegThumbnail: jpegThumbnail,
-				attachmentMediaKey: mediaKey,
-				attachmentMediaKeyTimestamp: mediaKeyTimestamp,
-				attachmentMimetype: mimetype,
-				token: generateMessageIDV2()
-			}
-		}
-	}
-	else if (flags.keep !== undefined) {
-		m = {
-			keepInChatMessage: {
-				key: flags.keep,
-				keepType: rest.type,
-				timestampMs: Date.now()
-			}
-		}
-	}
-	else if (flags.pin !== undefined) {
-		m = {
-			pinInChatMessage: {
-				key: flags.pin,
-				type: rest.type,
-				senderTimestampMs: Date.now()
-			},
-			messageContextInfo: {
-				messageAddOnDurationInSecs: rest.type === 1 ? rest.time || 86400 : 0
-			}
-		}
-	}
-	else if (flags.requestPhoneNumber) {
-		m = { requestPhoneNumberMessage: {} }
-	}
-	else if (flags.sharePhoneNumber) {
-		m = { protocolMessage: { type: proto.Message.ProtocolMessage.Type.SHARE_PHONE_NUMBER } }
-	}
-	else if (flags.limitSharing !== undefined) {
-		m = {
-			protocolMessage: {
-				type: proto.Message.ProtocolMessage.Type.LIMIT_SHARING,
-				limitSharing: {
-					sharingLimited: flags.limitSharing === true,
-					trigger: 1,
-					limitSharingSettingTimestamp: Date.now(),
-					initiatedByMe: true
-				}
-			}
-		}
-	}
 	else if (flags.buttonReply) {
 		m = rest.type === 'template'
 			? {
@@ -635,9 +522,6 @@ const buildProtoMessage = async (content, mediaCtx) => {
 			}
 		}
 	}
-	else if (flags.product) {
-		m = { productMessage: await prepareProductMessage(flags.product, mediaCtx) }
-	}
 	else if (flags.album) {
 		const items = flags.album
 		if (!Array.isArray(items)) throw new Error('album must be an array of media contents')
@@ -650,7 +534,7 @@ const buildProtoMessage = async (content, mediaCtx) => {
 		m = { albumMessage: { expectedImageCount: imageCount, expectedVideoCount: videoCount } }
 	}
 	else if (flags.buttons !== undefined || flags.sections !== undefined ||
-		flags.templateButtons !== undefined || flags.nativeFlow !== undefined || flags.cards !== undefined) {
+		flags.templateButtons !== undefined || flags.nativeFlow !== undefined) {
 		// like the fork's chain: build base media first (for headers), then the interactive branch
 		const { image, video, audio, document, sticker } = rest
 		const baseMedia = { image, video, audio, document, sticker }
