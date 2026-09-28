@@ -89,8 +89,13 @@ const sock = makeWASocket({ ...easySocketDefaults, auth, logger })
 ## Deliberately NOT included
 
 These need proto regeneration or deep Baileys internals, so they can't be
-clean helper features: `spoiler`, sticker packs, native flows / carousels,
+clean helper features: `spoiler`, sticker packs,
 rich responses, newsletter media upload paths, incoming edit decryption.
+
+Removed in v2.x for not working reliably: `viewOnce` (Baileys v7 `getMediaType`
+regression), `externalAdReply`, `cards` (carousel), payments
+(`paymentInviteServiceType`, `orderText`, `requestPaymentFrom`, `invoiceNote`,
+`product`), `keep`/`pin`, `requestPhoneNumber`/`sharePhoneNumber`/`limitSharing`.
 
 ## Test
 
