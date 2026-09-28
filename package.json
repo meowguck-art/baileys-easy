@@ -1,1 +1,27 @@
-{"dependencies":{"@adiwajshing/keyed-db":"^0.2.4"},"description":"Easy extras on top of official Baileys (WhiskeySockets): simplified externalAdReply, mentionAll, message wrappers (viewOnce/ephemeral/groupStatus/lottie), AI icon, payments, album, newsletter quoting, makeInMemoryStore — without touching Baileys' source","exports":{".":{"import":"./baileys-easy.mjs","require":"./baileys-easy.cjs"}},"keywords":["whatsapp","baileys","helper","chatbot"],"license":"MIT","main":"./baileys-easy.cjs","module":"./baileys-easy.mjs","name":"baileys-easy","peerDependencies":{"@whiskeysockets/baileys":">=6.7.0"},"type":"module","version":"1.1.0"}
+{
+ "dependencies": {
+  "@adiwajshing/keyed-db": "^0.2.4"
+ },
+ "description": "Easy extras on top of official Baileys (WhiskeySockets): simplified externalAdReply, mentionAll, message wrappers (viewOnce/ephemeral/groupStatus/lottie), AI icon, payments, album, newsletter quoting, makeInMemoryStore \u2014 without touching Baileys' source",
+ "exports": {
+  ".": {
+   "import": "./baileys-easy.mjs",
+   "require": "./baileys-easy.cjs"
+  }
+ },
+ "keywords": [
+  "whatsapp",
+  "baileys",
+  "helper",
+  "chatbot"
+ ],
+ "license": "MIT",
+ "main": "./baileys-easy.cjs",
+ "module": "./baileys-easy.mjs",
+ "name": "baileys-easy",
+ "peerDependencies": {
+  "@whiskeysockets/baileys": ">=7.0.0-rc.0"
+ },
+ "type": "module",
+ "version": "1.1.1"
+}
