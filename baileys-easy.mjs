@@ -188,7 +188,7 @@ const prepareNativeFlowButtons = (nativeFlow, message = {}) => {
 			if (button.name) {
 				return {
 					name: button.name,
-					buttonParamsJson: button.paramsJson
+					buttonParamsJson: button.buttonParamsJson ?? button.paramsJson
 				}
 			}
 			return button
@@ -253,7 +253,7 @@ const buildInteractiveMessage = async (flags, rest, base, mediaCtx) => {
 				}
 				if (button.name) {
 					return {
-						nativeFlowInfo: { name: button.name, paramsJson: button.paramsJson },
+						nativeFlowInfo: { name: button.name, paramsJson: button.buttonParamsJson ?? button.paramsJson },
 						type: ButtonType.NATIVE_FLOW
 					}
 				}

@@ -289,6 +289,21 @@ await easy.sendEasyMessage(mockSock, '1234567890@s.whatsapp.net', {
 	ok('proto round-trip', !!proto.Message.decode(enc).viewOnceMessage)
 }
 
+console.log('— interactive: buttonParamsJson alias')
+reset()
+await easy.sendEasyMessage(mockSock, '1234567890@s.whatsapp.net', {
+	text: 'raw flow',
+	nativeFlow: [
+		{ name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: 'Go', id: 'g1' }) },
+		{ name: 'cta_url', paramsJson: JSON.stringify({ display_text: 'Web', url: 'https://example.com' }) }
+	]
+})
+{
+	const btns = normalizeMessageContent(last().message).interactiveMessage.nativeFlowMessage.buttons
+	ok('buttonParamsJson accepted', JSON.parse(btns[0].buttonParamsJson).id === 'g1')
+	ok('paramsJson still accepted', JSON.parse(btns[1].buttonParamsJson).display_text === 'Web')
+}
+
 console.log('— interactive: no bot node in groups')
 reset()
 await easy.sendEasyMessage(mockSock, '120363000000@g.us', {
