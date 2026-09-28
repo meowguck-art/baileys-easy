@@ -373,7 +373,7 @@ const buildInteractiveMessage = async (flags, rest, base, mediaCtx) => {
 					throw new Error('carousel card needs an image/video/document/product header')
 				}
 				const carouselCard = {
-					nativeFlowMessage: prepareNativeFlowButtons(card.nativeFlow ? card : [])
+					nativeFlowMessage: prepareNativeFlowButtons(card.nativeFlow || card.buttons ? card : [])
 				}
 				const mode = buildInteractiveBody(carouselCard, card)
 				if (mode === 'caption') {
