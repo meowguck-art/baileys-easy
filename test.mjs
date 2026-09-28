@@ -350,5 +350,30 @@ await easy.sendEasyMessage(mockSock, '1234567890@s.whatsapp.net', {
 	ok('templateMessage wrapper', !!m.templateMessage?.interactiveMessageTemplate)
 }
 
+console.log('— reply parsers: getButtonReplyId / getListReplyId / getFlowReply')
+{
+	ok('quick_reply tap', easy.getButtonReplyId({
+		interactiveResponseMessage: {
+			nativeFlowResponseMessage: { paramsJson: JSON.stringify({ id: 'b1' }) }
+		}
+	}) === 'b1')
+	ok('single_select pick via interactive', easy.getButtonReplyId({
+		interactiveResponseMessage: { singleSelectReply: { selectedRowId: 'r9' } }
+	}) === 'r9')
+	ok('legacy list reply', easy.getListReplyId({
+		listResponseMessage: { singleSelectReply: { selectedRowId: 'row7' } }
+	}) === 'row7')
+	ok('flow reply params', (() => {
+		const p = easy.getFlowReply({
+			interactiveResponseMessage: {
+				nativeFlowResponseMessage: { paramsJson: JSON.stringify({ id: 'f1', screen: 'done', data: { a: 1 } }) }
+			}
+		})
+		return p && p.screen === 'done' && p.data.a === 1
+	})())
+	ok('non-reply returns null', easy.getButtonReplyId({ conversation: 'hi' }) === null
+		&& easy.getListReplyId({}) === null && easy.getFlowReply(null) === null)
+}
+
 console.log(`\n${pass} passed, ${fail} failed`)
 process.exit(fail ? 1 : 0)

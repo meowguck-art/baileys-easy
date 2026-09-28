@@ -16,7 +16,7 @@ Everything goes through official exports (`generateWAMessageContent`,
 | `baileys-easy.mjs` | ES modules (`import`) — the single implementation |
 | `baileys-easy.cjs` | CommonJS (`require`) — thin wrapper (needs Node ≥ 22.12) |
 | `store/` | Standalone `makeInMemoryStore` (+ 2 small utils), adapted to official Baileys |
-| `test.mjs` | 48 smoke tests, no WhatsApp connection needed |
+| `test.mjs` | 70 smoke tests, no WhatsApp connection needed |
 | `package.json` | Metadata; `@whiskeysockets/baileys` is a **peer** dependency |
 
 ## Quick start
@@ -86,6 +86,22 @@ store.bind(sock.ev)
 const sock = makeWASocket({ ...easySocketDefaults, auth, logger })
 ```
 
+## Parsing incoming replies
+
+What the user tapped, from `msg.message` (the proto message content):
+
+```js
+import { getButtonReplyId, getListReplyId, getFlowReply } from 'baileys-easy'
+
+sock.ev.on('messages.upsert', ({ messages }) => {
+  const m = messages[0]?.message
+  const btn = getButtonReplyId(m)   // quick_reply id (or single_select pick), else null
+  const row = getListReplyId(m)     // legacy list row id, else null
+  const flow = getFlowReply(m)      // parsed flow paramsJson object, else null
+  if (btn) console.log('tapped:', btn)
+})
+```
+
 ## Deliberately NOT included
 
 These need proto regeneration or deep Baileys internals, so they can't be
@@ -100,5 +116,5 @@ regression), `externalAdReply`, `cards` (carousel), payments
 ## Test
 
 ```sh
-node test.mjs   # 48 checks, no connection needed (needs @whiskeysockets/baileys resolvable)
+node test.mjs   # 70 checks, no connection needed (needs @whiskeysockets/baileys resolvable)
 ```

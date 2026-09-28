@@ -757,6 +757,57 @@ export const findUserId = async (sock, pnLid) => {
 }
 
 /**
+ * Extract the pressed button id from an incoming interactive reply.
+ * Handles quick_reply taps (nativeFlowResponseMessage.paramsJson)
+ * and single_select picks (singleSelectReply) on some clients.
+ * Pass msg.message (the proto message content). Returns the id string, or null.
+ */
+export const getButtonReplyId = (message) => {
+	try {
+		const r = message?.interactiveResponseMessage
+		if (!r) return null
+		const params = r?.nativeFlowResponseMessage?.paramsJson
+		if (params) return JSON.parse(params).id || null
+		return r?.singleSelectReply?.selectedRowId || null
+	} catch {
+		return null
+	}
+}
+
+/**
+ * Extract the selected row id from an incoming legacy list reply.
+ * (Also checks the interactive location some mobile clients use.)
+ * Pass msg.message (the proto message content). Returns the id string, or null.
+ */
+export const getListReplyId = (message) => {
+	try {
+		return (
+			message?.listResponseMessage?.singleSelectReply?.selectedRowId ||
+			message?.interactiveResponseMessage?.singleSelectReply?.selectedRowId ||
+			null
+		)
+	} catch {
+		return null
+	}
+}
+
+/**
+ * Extract the submitted data from an incoming flow response.
+ * Pass msg.message (the proto message content).
+ * Returns the parsed paramsJson object, or null if not a flow reply.
+ */
+export const getFlowReply = (message) => {
+	try {
+		const params = message?.interactiveResponseMessage?.nativeFlowResponseMessage?.paramsJson
+		if (!params) return null
+		const parsed = JSON.parse(params)
+		return parsed.id !== undefined ? parsed : null
+	} catch {
+		return null
+	}
+}
+
+/**
  * The fork's makeWASocket config defaults, as a plain object you can spread
  * into your own makeWASocket() call.
  */
